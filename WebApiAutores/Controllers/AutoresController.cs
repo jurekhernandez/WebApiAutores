@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiAutores.Entidades;
+using WebApiAutores.Servicios;
 
 namespace WebApiAutores.Controllers
 {
@@ -8,6 +9,28 @@ namespace WebApiAutores.Controllers
     [Route("api/autores")]
     public class AutoresController : ControllerBase {
         private readonly AplicationDbContext context;
+        private readonly IServicio servicio;
+        private readonly ServicioTransient servicioTransient;
+        private readonly ServicioScoped servicioScoped;
+        private readonly ServicioSingleton servicioSingleton;
+        private readonly ILogger<AutoresController> logger;
+
+
+        public AutoresController(
+            AplicationDbContext context, 
+            IServicio servicio, 
+            ServicioTransient servicioTransient,
+            ServicioScoped servicioScoped, 
+            ServicioSingleton servicioSingleton,
+            ILogger<AutoresController> logger
+        ) {
+            this.context = context;
+            this.servicio = servicio;
+            this.servicioTransient = servicioTransient;
+            this.servicioScoped = servicioScoped;
+            this.servicioSingleton = servicioSingleton;
+            this.logger = logger;
+        }
         /* 
          * 
          * Los datos pueden venir desde distintos lugares como 
@@ -15,14 +38,29 @@ namespace WebApiAutores.Controllers
          * FromRoute = desde url   api/autores/Jurek
          * FromQuery = parametro de url   api/autores?nombre=Jurek&otro=algo
          * */
-        public AutoresController(AplicationDbContext context) {
-            this.context = context;
-        } 
+
+        [HttpGet("Guid")]
+        public ActionResult ObtenerGuid() {
+            return Ok(
+                new
+                {
+                    AutoresControllerTrasient = servicioTransient.Guid,
+                    ServicioA_Transient = servicio.ObtenerTransient(),
+                    AutoresControllerScoped = servicioScoped.Guid,
+                    ServicioA_Scoped = servicio.ObtenerScoped(),
+                    AutoresControllerSingleton = servicioSingleton.Guid,
+                    ServicioA_Singleton = servicio.ObtenerSingleton()
+                }
+            ); 
+        }
+
 
         [HttpGet] // api/autores
         [HttpGet("listado")] // api/autores/listado
         [HttpGet("/listado")] // /listado
         public async Task<ActionResult<List<Autor>>> Get() {
+            logger.LogWarning("Estamos obteniendo los autores");
+           // servicio.RealizarTarea();
             return await context.Autores.Include( autor => autor.libros).ToListAsync();
         }
 
