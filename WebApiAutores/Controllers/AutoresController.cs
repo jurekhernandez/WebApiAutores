@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiAutores.Entidades;
+using WebApiAutores.Filtros;
 using WebApiAutores.Servicios;
 
 namespace WebApiAutores.Controllers
 {
     [ApiController]
     [Route("api/autores")]
+    // [Authorize] // de esta forma cuido todas las rutas del controlador
     public class AutoresController : ControllerBase {
         private readonly AplicationDbContext context;
         private readonly IServicio servicio;
@@ -40,7 +43,10 @@ namespace WebApiAutores.Controllers
          * */
 
         [HttpGet("Guid")]
+        //[ResponseCache(Duration =10)] //  las solicitudes realizadas durante los prox 10 segundos, tendran una respuesta desde la cache
+        [ServiceFilter(typeof(MiFiltroDeAccion))]
         public ActionResult ObtenerGuid() {
+            
             return Ok(
                 new
                 {
@@ -58,9 +64,13 @@ namespace WebApiAutores.Controllers
         [HttpGet] // api/autores
         [HttpGet("listado")] // api/autores/listado
         [HttpGet("/listado")] // /listado
+        [ResponseCache(Duration = 10)] //  las solicitudes realizadas durante los prox 10 segundos, tendran una respuesta desde la cache
+        [Authorize] //  de esta forma solo cuido la ruta 
         public async Task<ActionResult<List<Autor>>> Get() {
-            logger.LogWarning("Estamos obteniendo los autores");
-           // servicio.RealizarTarea();
+          //  throw new Exception();
+            //logger.LogWarning("Estamos obteniendo los autores");
+             logger.LogInformation("Estamos obteniendo los autores");
+            // servicio.RealizarTarea();
             return await context.Autores.Include( autor => autor.libros).ToListAsync();
         }
 
