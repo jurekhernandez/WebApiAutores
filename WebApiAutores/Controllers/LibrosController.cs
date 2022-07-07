@@ -14,7 +14,7 @@ namespace WebApiAutores.Controllers
         {
             this.context = context;
         }
-
+/*
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Libro>> Get(int id)
         {
@@ -34,6 +34,6 @@ namespace WebApiAutores.Controllers
             return Ok();
         }
 
-
+*/
     }
 }

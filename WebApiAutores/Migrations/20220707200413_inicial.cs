@@ -4,7 +4,7 @@
 
 namespace WebApiAutores.Migrations
 {
-    public partial class Inicial : Migration
+    public partial class inicial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,11 +14,24 @@ namespace WebApiAutores.Migrations
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    nombre = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    nombre = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Autores", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Libros",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    titulo = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Libros", x => x.id);
                 });
         }
 
@@ -26,6 +39,9 @@ namespace WebApiAutores.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Autores");
+
+            migrationBuilder.DropTable(
+                name: "Libros");
         }
     }
 }

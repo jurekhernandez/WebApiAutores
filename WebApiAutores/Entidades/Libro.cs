@@ -1,4 +1,6 @@
-﻿using WebApiAutores.Validaciones;
+﻿using System.ComponentModel.DataAnnotations;
+
+using WebApiAutores.Validaciones;
 
 namespace WebApiAutores.Entidades
 {
@@ -6,8 +8,7 @@ namespace WebApiAutores.Entidades
     {
         public int id { get; set; }
         [PrimeraLetraMayusculaAttribute]
+        [StringLength(maximumLength:250)]
         public string titulo { get; set; }
-        public int autorid { get; set; }
-        public Autor Autor { get; set; } 
     }
 }
