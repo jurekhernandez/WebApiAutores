@@ -24,28 +24,28 @@ namespace WebApiAutores.Controllers
         }
      
         [HttpGet] // api/autores
-        public async Task<ActionResult<List<Autor>>> Get() {
-            return await context.Autores.ToListAsync();
+        public async Task<ActionResult<List<AutorDTO>>> Get() {
+           var autores = await context.Autores.ToListAsync();
+
+        return mapper.Map<List<AutorDTO>>(autores);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Autor>> Buscando(int id) { 
-            Autor autor = await context.Autores.FirstOrDefaultAsync(x => x.Id==id);
+        public async Task<ActionResult<AutorDTO>> Buscando(int id) { 
+            Autor autor = await context.Autores.FirstOrDefaultAsync(autorDB => autorDB.Id==id);
             if (autor == null) {
                 return NotFound();
             }
-            return Ok(autor);
+
+            return mapper.Map<AutorDTO>(autor);
         }
 
         [HttpGet("{nombre}")]
-        public async Task<ActionResult<Autor>> Buscando([FromRoute] string nombre)
+        public async Task<ActionResult<List<AutorDTO>>> Buscando([FromRoute] string nombre)
         {
-            Autor autor = await context.Autores.FirstOrDefaultAsync(x => x.Nombre.Contains(nombre));
-            if (autor == null)
-            {
-                return NotFound();
-            }
-            return Ok(autor);
+            var autores = await context.Autores.Where(autorDB => autorDB.Nombre.Contains(nombre)).ToListAsync();
+
+            return mapper.Map<List<AutorDTO>>(autores);
         }
 
         [HttpPost]
@@ -56,7 +56,7 @@ namespace WebApiAutores.Controllers
                 return BadRequest($"Ya existe este autor {autorCreacionDto.nombre}");
             }
 
-            var autor= mapper.Map<Autor>(autorCreacionDto);
+            Autor autor= mapper.Map<Autor>(autorCreacionDto);
             context.Add(autor);
             await context.SaveChangesAsync();
             return Ok();

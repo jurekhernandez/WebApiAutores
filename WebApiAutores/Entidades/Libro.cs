@@ -6,9 +6,12 @@ namespace WebApiAutores.Entidades
 {
     public class Libro
     {
-        public int id { get; set; }
+        public int Id { get; set; }
+        [Required]
         [PrimeraLetraMayusculaAttribute]
         [StringLength(maximumLength:250)]
-        public string titulo { get; set; }
+        public string Titulo { get; set; }
+        public List<Comentario> Comentarios { get; set; }
+        public List<AutorLibro> AutorLibro { get; set; }
     }
 }
