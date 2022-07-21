@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,40 +18,47 @@ namespace WebApiAutores.Controllers
     public class AutoresController : ControllerBase {
         private readonly AplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly IConfiguration configuration;
 
-        public AutoresController(AplicationDbContext context, IMapper mapper) {
+        public AutoresController(AplicationDbContext context, IMapper mapper, IConfiguration configuration) {
             this.context = context;
             this.mapper = mapper;
+            this.configuration = configuration;
         }
+       // [HttpGet("configuracion")]
+       // public ActionResult<string> ObtenerConfiguracion() {
+       //     return this.configuration["apellido"];
+       // 
+       // }
      
         [HttpGet] // api/autores
+        [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<List<AutorDTO>>> Get() {
-           var autores = await context.Autores.ToListAsync();
-
-        return mapper.Map<List<AutorDTO>>(autores);
+            var autores = await context.Autores.ToListAsync();
+            return mapper.Map<List<AutorDTO>>(autores);
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<AutorDTO>> Buscando(int id) { 
-            Autor autor = await context.Autores.FirstOrDefaultAsync(autorDB => autorDB.Id==id);
+
+        [HttpGet("{id:int}", Name ="obtenerAutor")]
+        public async Task<ActionResult<AutorDTOConLibro>> Buscando(int id) { 
+            Autor autor = await context.Autores
+                .Include(autorDb => autorDb.AutorLibro)
+                .ThenInclude(autorLibroDb => autorLibroDb.libro)                
+                .FirstOrDefaultAsync(autorDB => autorDB.Id==id);
             if (autor == null) {
                 return NotFound();
             }
-
-            return mapper.Map<AutorDTO>(autor);
+            return mapper.Map<AutorDTOConLibro>(autor);
         }
 
         [HttpGet("{nombre}")]
-        public async Task<ActionResult<List<AutorDTO>>> Buscando([FromRoute] string nombre)
-        {
+        public async Task<ActionResult<List<AutorDTO>>> Buscando([FromRoute] string nombre){
             var autores = await context.Autores.Where(autorDB => autorDB.Nombre.Contains(nombre)).ToListAsync();
-
             return mapper.Map<List<AutorDTO>>(autores);
         }
 
         [HttpPost]
         public async Task<ActionResult> Post([FromBody] AutorCreacionDTO autorCreacionDto) {
-
             var existeAutor = await context.Autores.AnyAsync(x => x.Nombre == autorCreacionDto.nombre);
             if (existeAutor) {
                 return BadRequest($"Ya existe este autor {autorCreacionDto.nombre}");
@@ -59,14 +67,14 @@ namespace WebApiAutores.Controllers
             Autor autor= mapper.Map<Autor>(autorCreacionDto);
             context.Add(autor);
             await context.SaveChangesAsync();
-            return Ok();
+
+            var autorDTO = mapper.Map<AutorDTO>(autor);
+            return CreatedAtRoute("obtenerAutor", new { id = autor.Id }, autorDTO);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(Autor autor, int id) {
-            if (autor.Id != id) {
-                return BadRequest("El id del autor no coincide con el id de la url");
-            }
+        public async Task<ActionResult> Put(AutorCreacionDTO autorCreacionDTO, int id) {
+
 
             var existe = await context.Autores.AnyAsync(x => x.Id == id);
             if (!existe)
@@ -74,10 +82,11 @@ namespace WebApiAutores.Controllers
                 return NotFound();
             }
 
-
+            var autor = mapper.Map<Autor>(autorCreacionDTO);
+            autor.Id = id;
             context.Update(autor);
             await context.SaveChangesAsync();
-            return Ok();
+            return NoContent();
 
         }
 
