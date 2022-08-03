@@ -23,7 +23,7 @@ namespace WebApiAutores.Controllers {
             this.userManager = userManager;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "obtenerComentariosLibro")]
         public async Task<ActionResult<List<ComentarioDTO>>> Get(int libroId) {
             var existeLibro = await this.context.Libros.AnyAsync(libroDB => libroDB.Id == libroId);
             if(!existeLibro) {
@@ -44,7 +44,7 @@ namespace WebApiAutores.Controllers {
             return mapper.Map<ComentarioDTO>(comentario);             
         }
 
-        [HttpPost]
+        [HttpPost(Name ="crearComentario")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult> Post(int libroId, ComentarioCreacionDTO comentarioCreacionDTO) {
             var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
@@ -63,6 +63,30 @@ namespace WebApiAutores.Controllers {
             await this.context.SaveChangesAsync();
             var comentarioDTO = mapper.Map<ComentarioDTO>(comentario);
             return CreatedAtRoute("ObtenerComentario", new {id = comentario.Id, libroId = libroId }, comentarioDTO);
+        }
+        [HttpPut("{id:int}", Name = "actualizarComentario")]
+        public async Task<ActionResult> Put(int libroId, int id, ComentarioCreacionDTO comentarioCreacionDTO) {
+            
+            var existeLibro = await context.Libros.AnyAsync(libroDB => libroDB.Id == libroId);
+            if(!existeLibro) {
+                return NotFound();
+            }
+
+            var existeComentario = await context.Comentarios.AnyAsync(comentarioDB => comentarioDB.Id ==id);
+            if(!existeComentario) {
+                return NotFound();
+            }
+
+            var comentario = mapper.Map<Comentario>(comentarioCreacionDTO);
+            comentario.Id = id;
+            comentario.LibroId = libroId;
+            context.Update(comentario);
+            await context.SaveChangesAsync();
+            return NoContent();
+
+
+
+
         }
     }
 }
